@@ -68,6 +68,55 @@ public class SandboxedThreadTest {
 
 		assertFalse(context.wasExecuted());
 	}
+
+	@Test
+	public void testSystemExitOnSandboxedThread() throws InterruptedException {
+		SandboxedThread<TestContext> thread = new SandboxedThread<>(new SandboxedRunnable<TestContext>() {
+
+			@Override
+			public void run(SandboxedThreadInfo info, TestContext context) {
+				System.exit(0);
+				context.markAsExecuted();
+			}
+		});
+
+		TestContext context = new TestContext();
+
+		thread.start(context);
+		thread.join();
+
+		assertFalse(context.wasExecuted());
+	}
+
+	@Test
+	public void testStartNewThreadOnSandboxedThread() throws InterruptedException {
+		SandboxedThread<TestContext> thread = new SandboxedThread<>(new SandboxedRunnable<TestContext>() {
+
+			@Override
+			public void run(SandboxedThreadInfo info, final TestContext context) {
+				Thread t = new Thread(new Runnable() {
+
+					@Override
+					public void run() {
+						System.err.println("kkdkdkdk");
+						context.markAsExecuted();
+					}
+				});
+				t.start();
+				try {
+					t.join();
+				} catch (InterruptedException e) {
+				}
+			}
+		});
+
+		TestContext context = new TestContext();
+
+		thread.start(context);
+		thread.join();
+
+		assertFalse(context.wasExecuted());
+	}
 }
 
 class TestContext {
